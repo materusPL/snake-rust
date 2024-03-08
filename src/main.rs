@@ -1,5 +1,5 @@
-use raylib::prelude::*;
 use rand::prelude::*;
+use raylib::prelude::*;
 
 const WIDTH: i32 = 800;
 const HEIGHT: i32 = 800;
@@ -28,15 +28,18 @@ struct Position {
     y: i32,
 }
 fn gen_apple(game_data: &GameData) -> Position {
-    let mut pos: Position = Position {x:0, y:0};
+    let mut pos: Position = Position { x: 0, y: 0 };
     let mut done = false;
     while !done {
         done = true;
-        pos = Position {x: thread_rng().gen_range(0..BOARD_WIDTH), y: thread_rng().gen_range(0..BOARD_HEIGHT)};
-        if game_data.head == pos {done = false}
-        else {
-            for tail_seg in &game_data.tail
-            {
+        pos = Position {
+            x: thread_rng().gen_range(0..BOARD_WIDTH),
+            y: thread_rng().gen_range(0..BOARD_HEIGHT),
+        };
+        if game_data.head == pos {
+            done = false
+        } else {
+            for tail_seg in &game_data.tail {
                 if (tail_seg.x == pos.x) && (tail_seg.y == pos.y) {
                     done = false;
                     break;
@@ -54,7 +57,7 @@ struct GameData {
     last_direction: Direction,
     game_over: bool,
     score: u32,
-    apple: Position
+    apple: Position,
 }
 fn update_game(game_data: &mut GameData) {
     game_data.last_direction = game_data.direction;
@@ -74,8 +77,7 @@ fn update_game(game_data: &mut GameData) {
     } else if game_data.head.y >= BOARD_HEIGHT {
         game_data.head.y = 0
     }
-    if game_data.head == game_data.apple
-    {
+    if game_data.head == game_data.apple {
         game_data.apple = gen_apple(game_data);
         game_data.score += 1;
         game_data.tail.push(game_data.tail.last().copied().unwrap());
@@ -95,8 +97,8 @@ fn update_game(game_data: &mut GameData) {
     game_data.tail[0] = old_head_pos;
     game_data.board[(old_head_pos.x + old_head_pos.y * BOARD_HEIGHT) as usize] = RectType::BODY;
     game_data.board[(game_data.head.x + game_data.head.y * BOARD_HEIGHT) as usize] = RectType::HEAD;
-    game_data.board[(game_data.apple.x + game_data.apple.y * BOARD_HEIGHT) as usize] = RectType::APPLE;
-
+    game_data.board[(game_data.apple.x + game_data.apple.y * BOARD_HEIGHT) as usize] =
+        RectType::APPLE;
 }
 fn create_game_data() -> GameData {
     let mut game_data = GameData {
@@ -116,7 +118,7 @@ fn create_game_data() -> GameData {
         last_direction: Direction::LEFT,
         game_over: false,
         score: 0,
-        apple: Position {x: 0, y: 0}
+        apple: Position { x: 0, y: 0 },
     };
     game_data.apple = gen_apple(&game_data);
     game_data
@@ -172,33 +174,53 @@ fn main() {
         }
 
         let mut d = rl.begin_drawing(&thread);
-        d.clear_background(Color::WHITE);
+        d.clear_background(Color::DARKGRAY);
         for y in 0..BOARD_HEIGHT {
             for x in 0..BOARD_WIDTH {
-                let color: Color;
+                let color: Option<Color>;
                 match game_data.board[(x + y * BOARD_WIDTH) as usize] {
-                    RectType::HEAD => color = Color::GREEN,
-                    RectType::BODY => color = Color::DARKGREEN,
-                    RectType::APPLE => color = Color::RED,
-                    RectType::EMPTY => color = Color::WHITE,
+                    RectType::HEAD => color = Option::Some(Color::PURPLE),
+                    RectType::BODY => color = Option::Some(Color::DARKPURPLE),
+                    RectType::APPLE => color = Option::Some(Color::GREEN),
+                    RectType::EMPTY => color = None,
                 };
-                d.draw_rectangle(x * RECT_SIZE, y * RECT_SIZE, RECT_SIZE, RECT_SIZE, color);
+                match color {
+                    Some(c) => {
+                        d.draw_rectangle(x * RECT_SIZE, y * RECT_SIZE, RECT_SIZE, RECT_SIZE, c)
+                    }
+                    None => {}
+                }
             }
         }
+        if !game_data.game_over {
+            d.draw_text(
+                format!("Score: {}", game_data.score).as_str(),
+                20,
+                10,
+                20,
+                Color::RED,
+            );
+        }
+
         if game_data.game_over {
-            d.draw_text("Game Over", WIDTH / 2 - 100, HEIGHT / 2, 40, Color::BLACK);
+            d.draw_text("Game Over", WIDTH / 2 - 100, HEIGHT / 2, 40, Color::WHITE);
             d.draw_text(
                 format!("Score: {}", game_data.score).as_str(),
                 WIDTH / 2 - 50,
                 HEIGHT / 2 + 50,
                 20,
-                Color::BLACK,
+                Color::WHITE,
             );
-            d.draw_text("Press Enter", WIDTH / 2 - 40, HEIGHT / 2 + 75, 10, Color::BLACK);
-
+            d.draw_text(
+                "Press Enter",
+                WIDTH / 2 - 40,
+                HEIGHT / 2 + 75,
+                10,
+                Color::WHITE,
+            );
         }
         if show_fps {
-            d.draw_text(fps.to_string().as_str(), 20, 10, 20, Color::BLUE)
+            d.draw_text(fps.to_string().as_str(), WIDTH - 50, 10, 20, Color::BLUE)
         }
     }
 }
